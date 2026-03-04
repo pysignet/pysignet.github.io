@@ -1,0 +1,1544 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Logic-as-loss for neural networks">
+      
+      
+      
+        <link rel="canonical" href="https://pysignet.github.io/custom-compilers/">
+      
+      
+        <link rel="prev" href="../api-tnorms/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/pysignet-logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Custom Compilers - pysignet</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#implementing-custom-compilers" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="pysignet" class="md-header__button md-logo" aria-label="pysignet" data-md-component="logo">
+      
+  <img src="../assets/pysignet-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pysignet
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Custom Compilers
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/pysignet/pysignet" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pysignet/pysignet
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="pysignet" class="md-nav__button md-logo" aria-label="pysignet" data-md-component="logo">
+      
+  <img src="../assets/pysignet-logo.png" alt="logo">
+
+    </a>
+    pysignet
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/pysignet/pysignet" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pysignet/pysignet
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-compiled-expression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CompiledExpression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-logic-loss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LogicLoss
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-tnorms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    T-Norms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Compilers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Compilers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-base-class-provides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the Base Class Provides
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need-to-implement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You Need to Implement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example-linear-threshold-unit-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example: Linear Threshold Unit Compiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-class-methods-you-should-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base Class Methods You Should Use
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Base Class Methods You Should Use">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validation-and-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation and Preprocessing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#predicate-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Predicate Evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-always-use-base-class-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Always Use Base Class Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-focus-on-logical-operator-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Focus on Logical Operator Semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-use-evaluationcontext-for-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Use EvaluationContext for Caching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-handle-all-logical-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Handle All Logical Operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-consider-differentiability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Consider Differentiability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-validate-constructor-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Validate Constructor Arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-size-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Size Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-your-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Your Compiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-t-norm-vs-ltu-compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison: T-norm vs LTU Compilers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-base-class-provides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the Base Class Provides
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need-to-implement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You Need to Implement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example-linear-threshold-unit-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example: Linear Threshold Unit Compiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-class-methods-you-should-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base Class Methods You Should Use
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Base Class Methods You Should Use">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validation-and-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation and Preprocessing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#predicate-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Predicate Evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-always-use-base-class-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Always Use Base Class Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-focus-on-logical-operator-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Focus on Logical Operator Semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-use-evaluationcontext-for-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Use EvaluationContext for Caching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-handle-all-logical-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Handle All Logical Operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-consider-differentiability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Consider Differentiability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-validate-constructor-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Validate Constructor Arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-size-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Size Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-your-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Your Compiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-t-norm-vs-ltu-compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison: T-norm vs LTU Compilers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="implementing-custom-compilers">Implementing Custom Compilers</h1>
+<p>This guide explains how to implement custom logic compilation strategies by extending the <code>LogicCompiler</code> base class.</p>
+<h2 id="overview">Overview</h2>
+<p>The <code>LogicCompiler</code> base class provides all compiler-agnostic functionality, allowing you to focus solely on defining the semantics of logical operators. Implementing a new compiler typically requires only 150-200 lines of code.</p>
+<h2 id="what-the-base-class-provides">What the Base Class Provides</h2>
+<p>The <code>LogicCompiler</code> base class handles:</p>
+<ol>
+<li><strong>Predicate Management</strong></li>
+<li>Automatic wrapping of callables in <code>Predicate</code> objects</li>
+<li>Validation that all symbols in expressions have corresponding predicates</li>
+<li>
+<p>Assignment of names to predicates</p>
+</li>
+<li>
+<p><strong>First-Order Logic Support</strong></p>
+</li>
+<li>Quantifier expansion (<code>ForAll</code>, <code>Exists</code>)</li>
+<li>Domain size safeguards (configurable limits)</li>
+<li>Arity validation for multi-variable predicates</li>
+<li>
+<p>Handling of mixed variable/constant arguments like <code>P(X, Y, 0)</code></p>
+</li>
+<li>
+<p><strong>Predicate Evaluation</strong></p>
+</li>
+<li>Routing based on number of free variables (nullary/unary/multi-ary)</li>
+<li>Input validation and error messages</li>
+<li>EvaluationContext caching to avoid redundant forward passes</li>
+<li>Output channel selection for multi-class predicates</li>
+<li>Boolean constant evaluation (<code>sp.true</code>, <code>sp.false</code>)</li>
+</ol>
+<h2 id="what-you-need-to-implement">What You Need to Implement</h2>
+<p>Your custom compiler must:</p>
+<ol>
+<li><strong>Inherit from <code>LogicCompiler</code></strong>
+   ```python
+   from pysignet.compilation import LogicCompiler</li>
+</ol>
+<p>class MyCompiler(LogicCompiler):
+       pass
+   ```</p>
+<ol>
+<li><strong>Implement <code>compile()</code> method</strong></li>
+<li>Call base class validation and preprocessing</li>
+<li>
+<p>Return a callable that evaluates the expression</p>
+</li>
+<li>
+<p><strong>Implement <code>_evaluate_expression()</code> method</strong></p>
+</li>
+<li>Define semantics for logical operators (AND, OR, NOT, IMPLIES, EQUIVALENT)</li>
+<li>Use base class methods for predicate evaluation</li>
+<li>Recursively evaluate subexpressions</li>
+</ol>
+<h2 id="complete-example-linear-threshold-unit-compiler">Complete Example: Linear Threshold Unit Compiler</h2>
+<p>Here's a complete implementation of a compiler that uses linear threshold units:</p>
+<pre><code class="language-python">from typing import Callable, Dict, Union
+
+import sympy as sp
+import torch
+
+from pysignet.compilation import LogicCompiler
+from pysignet.predicate import Predicate
+from pysignet.context import EvaluationContext
+from pysignet.symbols import PredicateApplication
+
+
+class LinearThresholdUnitCompiler(LogicCompiler):
+    &quot;&quot;&quot;Compiles logic expressions using linear threshold units.
+
+    This compiler represents logical operations as linear threshold units:
+    - Conjunction of n literals: sgn(sum(literals) - (n - 0.5))
+    - Disjunction of n literals: sgn(sum(literals) - 0.5)
+    - Negation: 1 - literal
+
+    Args:
+        mode: 'soft' (sigmoid, differentiable) or 'hard' (sign, non-differentiable)
+    &quot;&quot;&quot;
+
+    def __init__(self, mode: str = 'soft') -&gt; None:
+        &quot;&quot;&quot;Initialize LinearThresholdUnitCompiler.
+
+        Args:
+            mode: 'soft' for sigmoid or 'hard' for sign function
+
+        Raises:
+            ValueError: If mode is not 'soft' or 'hard'
+        &quot;&quot;&quot;
+        if mode not in ('soft', 'hard'):
+            raise ValueError(f&quot;mode must be 'soft' or 'hard', got '{mode}'&quot;)
+        self.mode = mode
+
+    def compile(
+        self,
+        expr: sp.Basic,
+        predicates: Dict[str, Predicate]
+    ) -&gt; Callable[[Union[torch.Tensor, Dict[str, torch.Tensor]]], torch.Tensor]:
+        &quot;&quot;&quot;Compile a logic expression into a differentiable callable.
+
+        Args:
+            expr: SymPy logic expression
+            predicates: Dict mapping predicate names to Predicate objects or callables
+
+        Returns:
+            Callable that takes inputs and returns satisfaction tensor
+        &quot;&quot;&quot;
+        # Use base class for all validation and preprocessing
+        wrapped_predicates = self._wrap_and_validate_predicates(expr, predicates)
+        expanded_expr = self._expand_quantifiers(expr)
+
+        # Return a closure that evaluates the expression
+        def compiled_logic(
+            inputs: Union[torch.Tensor, Dict[str, torch.Tensor]]
+        ) -&gt; torch.Tensor:
+            &quot;&quot;&quot;Evaluate compiled logic expression.&quot;&quot;&quot;
+            ctx = EvaluationContext()
+            return self._evaluate_expression(
+                expanded_expr, inputs, wrapped_predicates, ctx
+            )
+
+        return compiled_logic
+
+    def _evaluate_expression(
+        self,
+        expr: sp.Basic,
+        inputs: Union[torch.Tensor, Dict[str, torch.Tensor]],
+        predicates: Dict[str, Predicate],
+        ctx: EvaluationContext
+    ) -&gt; torch.Tensor:
+        &quot;&quot;&quot;Recursively evaluate SymPy expression using LTU operations.
+
+        Args:
+            expr: SymPy expression to evaluate
+            inputs: Single tensor or dict of tensors
+            predicates: Dict of predicates
+            ctx: Evaluation context for caching
+
+        Returns:
+            Tensor of shape (batch_size,) with values in [0, 1]
+        &quot;&quot;&quot;
+        # Base cases: use base class methods for predicate evaluation
+        if isinstance(expr, PredicateApplication):
+            return self._evaluate_predicate_application(
+                expr, inputs, predicates, ctx
+            )
+
+        if isinstance(expr, sp.Symbol):
+            return self._evaluate_symbol(expr, inputs, predicates, ctx)
+
+        if expr in (sp.true, sp.false):
+            return self._evaluate_boolean_constant(expr, inputs)
+
+        # Logical operators: define YOUR semantics here
+        if isinstance(expr, sp.Not):
+            # Negation: 1 - x
+            return 1.0 - self._evaluate_expression(
+                expr.args[0], inputs, predicates, ctx
+            )
+
+        if isinstance(expr, sp.And):
+            # Conjunction: threshold(sum(literals) - (n - 0.5))
+            literals = [
+                self._evaluate_expression(arg, inputs, predicates, ctx)
+                for arg in expr.args
+            ]
+
+            summed = torch.stack(literals, dim=0).sum(dim=0)
+            threshold = len(literals) - 0.5
+
+            if self.mode == 'soft':
+                # Differentiable: sigmoid(k * (sum - threshold))
+                return torch.sigmoid(10.0 * (summed - threshold))
+            else:
+                # Non-differentiable: sign(sum - threshold)
+                return ((summed - threshold) &gt;= 0).float()
+
+        if isinstance(expr, sp.Or):
+            # Disjunction: threshold(sum(literals) - 0.5)
+            literals = [
+                self._evaluate_expression(arg, inputs, predicates, ctx)
+                for arg in expr.args
+            ]
+
+            summed = torch.stack(literals, dim=0).sum(dim=0)
+            threshold = 0.5
+
+            if self.mode == 'soft':
+                return torch.sigmoid(10.0 * (summed - threshold))
+            else:
+                return ((summed - threshold) &gt;= 0).float()
+
+        if isinstance(expr, sp.Implies):
+            # Implication: (NOT L) OR R
+            not_lhs = sp.Not(expr.args[0])
+            rhs = expr.args[1]
+            return self._evaluate_expression(
+                sp.Or(not_lhs, rhs), inputs, predicates, ctx
+            )
+
+        if isinstance(expr, sp.Equivalent):
+            # Equivalence: (L =&gt; R) AND (R =&gt; L)
+            lhs, rhs = expr.args[0], expr.args[1]
+            forward = sp.Implies(lhs, rhs)
+            backward = sp.Implies(rhs, lhs)
+            return self._evaluate_expression(
+                sp.And(forward, backward), inputs, predicates, ctx
+            )
+
+        raise ValueError(f&quot;Unsupported expression type: {type(expr)}&quot;)
+</code></pre>
+<h2 id="usage-example">Usage Example</h2>
+<pre><code class="language-python">import torch
+import sympy as sp
+from pysignet import Symbol
+
+# Create your custom compiler
+compiler = LinearThresholdUnitCompiler(mode='soft')
+
+# Define logic expression
+P, Q = Symbol(&quot;P Q&quot;)
+expr = sp.And(P, Q)
+
+# Define predicates
+predicates = {
+    &quot;P&quot;: lambda x: torch.sigmoid(x.sum(dim=-1)),
+    &quot;Q&quot;: lambda x: torch.sigmoid(x.mean(dim=-1))
+}
+
+# Compile
+compiled = compiler.compile(expr, predicates)
+
+# Evaluate
+x = torch.randn(10, 5)
+result = compiled(x)  # Shape: (10,), values in [0, 1]
+</code></pre>
+<h2 id="base-class-methods-you-should-use">Base Class Methods You Should Use</h2>
+<h3 id="validation-and-preprocessing">Validation and Preprocessing</h3>
+<pre><code class="language-python"># In your compile() method:
+wrapped_predicates = self._wrap_and_validate_predicates(expr, predicates)
+expanded_expr = self._expand_quantifiers(expr)
+</code></pre>
+<p>These methods:
+- Wrap callables in <code>Predicate</code> objects
+- Validate that all symbols have predicates
+- Validate predicate arity
+- Expand quantifiers (<code>ForAll</code>, <code>Exists</code>)
+- Check domain size limits</p>
+<h3 id="predicate-evaluation">Predicate Evaluation</h3>
+<pre><code class="language-python"># In your _evaluate_expression() method:
+
+# For PredicateApplication (e.g., P(X, Y, 0))
+if isinstance(expr, PredicateApplication):
+    return self._evaluate_predicate_application(expr, inputs, predicates, ctx)
+
+# For nullary predicates (e.g., P)
+if isinstance(expr, sp.Symbol):
+    return self._evaluate_symbol(expr, inputs, predicates, ctx)
+
+# For boolean constants (sp.true, sp.false)
+if expr in (sp.true, sp.false):
+    return self._evaluate_boolean_constant(expr, inputs)
+</code></pre>
+<p>These methods handle:
+- Free variable extraction
+- Input routing (single tensor vs dict)
+- Multi-ary predicates
+- Caching via <code>EvaluationContext</code>
+- Output channel selection
+- Error messages</p>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-always-use-base-class-methods">1. Always Use Base Class Methods</h3>
+<pre><code class="language-python"># GOOD: Use base class for predicate evaluation
+if isinstance(expr, PredicateApplication):
+    return self._evaluate_predicate_application(expr, inputs, predicates, ctx)
+
+# BAD: Reimplementing predicate logic yourself
+if isinstance(expr, PredicateApplication):
+    # ... 100 lines of manual handling
+</code></pre>
+<h3 id="2-focus-on-logical-operator-semantics">2. Focus on Logical Operator Semantics</h3>
+<p>Your compiler should only define the semantics of AND, OR, NOT, etc. Everything else is handled by the base class.</p>
+<pre><code class="language-python"># Your compiler focuses on THIS:
+if isinstance(expr, sp.And):
+    # Define what AND means in your system
+    literals = [self._evaluate_expression(arg, ...) for arg in expr.args]
+    return your_and_semantics(literals)
+</code></pre>
+<h3 id="3-use-evaluationcontext-for-caching">3. Use EvaluationContext for Caching</h3>
+<p>The base class predicate evaluation methods automatically use <code>ctx</code> for caching. Make sure to pass it through:</p>
+<pre><code class="language-python">def _evaluate_expression(self, expr, inputs, predicates, ctx):
+    # Pass ctx to base class methods
+    return self._evaluate_predicate_application(expr, inputs, predicates, ctx)
+</code></pre>
+<h3 id="4-handle-all-logical-operators">4. Handle All Logical Operators</h3>
+<p>At minimum, implement:
+- <code>sp.Not</code> (negation)
+- <code>sp.And</code> (conjunction)
+- <code>sp.Or</code> (disjunction)
+- <code>sp.Implies</code> (implication)
+- <code>sp.Equivalent</code> (equivalence)</p>
+<p>You can implement <code>Implies</code> and <code>Equivalent</code> in terms of other operators, or provide custom semantics.</p>
+<h3 id="5-consider-differentiability">5. Consider Differentiability</h3>
+<p>If you want gradients to flow through your logic:
+- Use differentiable operations (e.g., <code>sigmoid</code> instead of <code>sign</code>)
+- Avoid operations that break gradient flow (e.g., <code>.detach()</code>, comparisons)</p>
+<h3 id="6-validate-constructor-arguments">6. Validate Constructor Arguments</h3>
+<pre><code class="language-python">def __init__(self, mode: str = 'soft'):
+    if mode not in ('soft', 'hard'):
+        raise ValueError(f&quot;mode must be 'soft' or 'hard', got '{mode}'&quot;)
+    self.mode = mode
+</code></pre>
+<h2 id="domain-size-configuration">Domain Size Configuration</h2>
+<p>The base class provides configurable domain size limits:</p>
+<pre><code class="language-python">class MyCompiler(LogicCompiler):
+    # Override class attributes to change limits
+    MAX_DOMAIN_SIZE = 5000  # Raise error above this
+    WARN_DOMAIN_SIZE = 500  # Warn above this
+</code></pre>
+<p>These limits prevent accidental expansion of huge quantified domains.</p>
+<h2 id="testing-your-compiler">Testing Your Compiler</h2>
+<p>Create comprehensive tests covering:</p>
+<ol>
+<li><strong>Basic operations</strong>: AND, OR, NOT with simple predicates</li>
+<li><strong>Implication and equivalence</strong></li>
+<li><strong>Quantifiers</strong>: <code>ForAll</code>, <code>Exists</code> if supported</li>
+<li><strong>Boolean constants</strong>: <code>sp.true</code>, <code>sp.false</code></li>
+<li><strong>Edge cases</strong>: Empty batches, single elements, nested expressions</li>
+<li><strong>Gradient flow</strong>: If differentiable, verify gradients propagate</li>
+</ol>
+<p>Example test structure:</p>
+<pre><code class="language-python">import pytest
+import torch
+from pysignet import Symbol
+
+def test_basic_and():
+    &quot;&quot;&quot;Test AND operation.&quot;&quot;&quot;
+    compiler = MyCompiler()
+    P, Q = Symbol(&quot;P Q&quot;)
+    expr = sp.And(P, Q)
+
+    predicates = {
+        &quot;P&quot;: lambda x: torch.full((x.shape[0],), 0.8),
+        &quot;Q&quot;: lambda x: torch.full((x.shape[0],), 0.9)
+    }
+
+    compiled = compiler.compile(expr, predicates)
+    x = torch.randn(5, 10)
+    result = compiled(x)
+
+    assert result.shape == (5,)
+    assert torch.all((result &gt;= 0) &amp; (result &lt;= 1))
+</code></pre>
+<h2 id="comparison-t-norm-vs-ltu-compilers">Comparison: T-norm vs LTU Compilers</h2>
+<p>The library includes two built-in compilers:</p>
+<p><strong>TNormCompiler</strong> (continuous relaxations):
+- AND: <code>a * b</code> (Product) or <code>max(0, a+b-1)</code> (Lukasiewicz)
+- OR: <code>a + b - a*b</code> (Product) or <code>min(1, a+b)</code> (Lukasiewicz)
+- NOT: <code>1 - a</code></p>
+<p><strong>LinearThresholdUnitCompiler</strong> (threshold functions):
+- AND: <code>sigmoid(10 * (sum(literals) - (n - 0.5)))</code>
+- OR: <code>sigmoid(10 * (sum(literals) - 0.5))</code>
+- NOT: <code>1 - a</code></p>
+<p>Both use the same base class infrastructure, differing only in operator semantics.</p>
+<h2 id="summary">Summary</h2>
+<p>Implementing a custom compiler requires:
+1. Inherit from <code>LogicCompiler</code>
+2. Call base class methods in <code>compile()</code> for validation/preprocessing
+3. Implement <code>_evaluate_expression()</code> with your operator semantics
+4. Use base class methods for predicate evaluation
+5. Test thoroughly</p>
+<p>The base class handles all the complexity of predicate management, validation, FOL support, and caching. You focus solely on defining what AND, OR, NOT, etc. mean in your system.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
