@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://pysignet.github.io/custom-compilers/">
       
       
-        <link rel="prev" href="../api-tnorms/">
+        <link rel="prev" href="../api-compilers/">
       
       
       
@@ -470,6 +470,34 @@
     
   
     T-Norms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-compilers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compilers
   
 
     
@@ -1325,29 +1353,33 @@ class LinearThresholdUnitCompiler(LogicCompiler):
         raise ValueError(f&quot;Unsupported expression type: {type(expr)}&quot;)
 </code></pre>
 <h2 id="usage-example">Usage Example</h2>
+<p><code>LinearThresholdUnitCompiler</code> is built into pysignet and can be imported directly:</p>
 <pre><code class="language-python">import torch
-import sympy as sp
-from pysignet import Symbol
+from pysignet import Symbol, Variable, LinearThresholdUnitCompiler, LogicLoss
+from pysignet import And, Implies
 
-# Create your custom compiler
+# Create the built-in LTU compiler
 compiler = LinearThresholdUnitCompiler(mode='soft')
 
 # Define logic expression
 P, Q = Symbol(&quot;P Q&quot;)
-expr = sp.And(P, Q)
+X = Variable(&quot;X&quot;)
+expr = Implies(P(X), Q(X))
 
 # Define predicates
 predicates = {
     &quot;P&quot;: lambda x: torch.sigmoid(x.sum(dim=-1)),
-    &quot;Q&quot;: lambda x: torch.sigmoid(x.mean(dim=-1))
+    &quot;Q&quot;: lambda x: torch.sigmoid(x.mean(dim=-1)),
 }
 
-# Compile
+# Compile and wrap in LogicLoss
 compiled = compiler.compile(expr, predicates)
+logic_loss = LogicLoss(compiled)
 
 # Evaluate
 x = torch.randn(10, 5)
-result = compiled(x)  # Shape: (10,), values in [0, 1]
+satisfaction = logic_loss.satisfaction(X=x)  # scalar
+loss = logic_loss.loss(X=x)                  # for training
 </code></pre>
 <h2 id="base-class-methods-you-should-use">Base Class Methods You Should Use</h2>
 <h3 id="validation-and-preprocessing">Validation and Preprocessing</h3>
