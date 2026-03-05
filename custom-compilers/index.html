@@ -1176,15 +1176,17 @@
 <h2 id="what-you-need-to-implement">What You Need to Implement</h2>
 <p>Your custom compiler must:</p>
 <ol>
-<li><strong>Inherit from <code>LogicCompiler</code></strong>
-   ```python
-   from pysignet.compilation import LogicCompiler</li>
-</ol>
-<p>class MyCompiler(LogicCompiler):
-       pass
-   ```</p>
-<ol>
-<li><strong>Implement <code>compile()</code> method</strong></li>
+<li>
+<p><strong>Inherit from <code>LogicCompiler</code></strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet.compilation</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogicCompiler</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyCompiler</span><span class="p">(</span><span class="n">LogicCompiler</span><span class="p">):</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">pass</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Implement <code>compile()</code> method</strong></p>
+</li>
 <li>Call base class validation and preprocessing</li>
 <li>
 <p>Return a callable that evaluates the expression</p>
@@ -1198,195 +1200,195 @@
 </ol>
 <h2 id="complete-example-linear-threshold-unit-compiler">Complete Example: Linear Threshold Unit Compiler</h2>
 <p>Here's a complete implementation of a compiler that uses linear threshold units:</p>
-<pre><code class="language-python">from typing import Callable, Dict, Union
-
-import sympy as sp
-import torch
-
-from pysignet.compilation import LogicCompiler
-from pysignet.predicate import Predicate
-from pysignet.context import EvaluationContext
-from pysignet.symbols import PredicateApplication
-
-
-class LinearThresholdUnitCompiler(LogicCompiler):
-    &quot;&quot;&quot;Compiles logic expressions using linear threshold units.
-
-    This compiler represents logical operations as linear threshold units:
-    - Conjunction of n literals: sgn(sum(literals) - (n - 0.5))
-    - Disjunction of n literals: sgn(sum(literals) - 0.5)
-    - Negation: 1 - literal
-
-    Args:
-        mode: 'soft' (sigmoid, differentiable) or 'hard' (sign, non-differentiable)
-    &quot;&quot;&quot;
-
-    def __init__(self, mode: str = 'soft') -&gt; None:
-        &quot;&quot;&quot;Initialize LinearThresholdUnitCompiler.
-
-        Args:
-            mode: 'soft' for sigmoid or 'hard' for sign function
-
-        Raises:
-            ValueError: If mode is not 'soft' or 'hard'
-        &quot;&quot;&quot;
-        if mode not in ('soft', 'hard'):
-            raise ValueError(f&quot;mode must be 'soft' or 'hard', got '{mode}'&quot;)
-        self.mode = mode
-
-    def compile(
-        self,
-        expr: sp.Basic,
-        predicates: Dict[str, Predicate]
-    ) -&gt; Callable[[Union[torch.Tensor, Dict[str, torch.Tensor]]], torch.Tensor]:
-        &quot;&quot;&quot;Compile a logic expression into a differentiable callable.
-
-        Args:
-            expr: SymPy logic expression
-            predicates: Dict mapping predicate names to Predicate objects or callables
-
-        Returns:
-            Callable that takes inputs and returns satisfaction tensor
-        &quot;&quot;&quot;
-        # Use base class for all validation and preprocessing
-        wrapped_predicates = self._wrap_and_validate_predicates(expr, predicates)
-        expanded_expr = self._expand_quantifiers(expr)
-
-        # Return a closure that evaluates the expression
-        def compiled_logic(
-            inputs: Union[torch.Tensor, Dict[str, torch.Tensor]]
-        ) -&gt; torch.Tensor:
-            &quot;&quot;&quot;Evaluate compiled logic expression.&quot;&quot;&quot;
-            ctx = EvaluationContext()
-            return self._evaluate_expression(
-                expanded_expr, inputs, wrapped_predicates, ctx
-            )
-
-        return compiled_logic
-
-    def _evaluate_expression(
-        self,
-        expr: sp.Basic,
-        inputs: Union[torch.Tensor, Dict[str, torch.Tensor]],
-        predicates: Dict[str, Predicate],
-        ctx: EvaluationContext
-    ) -&gt; torch.Tensor:
-        &quot;&quot;&quot;Recursively evaluate SymPy expression using LTU operations.
-
-        Args:
-            expr: SymPy expression to evaluate
-            inputs: Single tensor or dict of tensors
-            predicates: Dict of predicates
-            ctx: Evaluation context for caching
-
-        Returns:
-            Tensor of shape (batch_size,) with values in [0, 1]
-        &quot;&quot;&quot;
-        # Base cases: use base class methods for predicate evaluation
-        if isinstance(expr, PredicateApplication):
-            return self._evaluate_predicate_application(
-                expr, inputs, predicates, ctx
-            )
-
-        if isinstance(expr, sp.Symbol):
-            return self._evaluate_symbol(expr, inputs, predicates, ctx)
-
-        if expr in (sp.true, sp.false):
-            return self._evaluate_boolean_constant(expr, inputs)
-
-        # Logical operators: define YOUR semantics here
-        if isinstance(expr, sp.Not):
-            # Negation: 1 - x
-            return 1.0 - self._evaluate_expression(
-                expr.args[0], inputs, predicates, ctx
-            )
-
-        if isinstance(expr, sp.And):
-            # Conjunction: threshold(sum(literals) - (n - 0.5))
-            literals = [
-                self._evaluate_expression(arg, inputs, predicates, ctx)
-                for arg in expr.args
-            ]
-
-            summed = torch.stack(literals, dim=0).sum(dim=0)
-            threshold = len(literals) - 0.5
-
-            if self.mode == 'soft':
-                # Differentiable: sigmoid(k * (sum - threshold))
-                return torch.sigmoid(10.0 * (summed - threshold))
-            else:
-                # Non-differentiable: sign(sum - threshold)
-                return ((summed - threshold) &gt;= 0).float()
-
-        if isinstance(expr, sp.Or):
-            # Disjunction: threshold(sum(literals) - 0.5)
-            literals = [
-                self._evaluate_expression(arg, inputs, predicates, ctx)
-                for arg in expr.args
-            ]
-
-            summed = torch.stack(literals, dim=0).sum(dim=0)
-            threshold = 0.5
-
-            if self.mode == 'soft':
-                return torch.sigmoid(10.0 * (summed - threshold))
-            else:
-                return ((summed - threshold) &gt;= 0).float()
-
-        if isinstance(expr, sp.Implies):
-            # Implication: (NOT L) OR R
-            not_lhs = sp.Not(expr.args[0])
-            rhs = expr.args[1]
-            return self._evaluate_expression(
-                sp.Or(not_lhs, rhs), inputs, predicates, ctx
-            )
-
-        if isinstance(expr, sp.Equivalent):
-            # Equivalence: (L =&gt; R) AND (R =&gt; L)
-            lhs, rhs = expr.args[0], expr.args[1]
-            forward = sp.Implies(lhs, rhs)
-            backward = sp.Implies(rhs, lhs)
-            return self._evaluate_expression(
-                sp.And(forward, backward), inputs, predicates, ctx
-            )
-
-        raise ValueError(f&quot;Unsupported expression type: {type(expr)}&quot;)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sympy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sp</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet.compilation</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogicCompiler</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet.predicate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Predicate</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationContext</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet.symbols</span><span class="w"> </span><span class="kn">import</span> <span class="n">PredicateApplication</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">class</span><span class="w"> </span><span class="nc">LinearThresholdUnitCompiler</span><span class="p">(</span><span class="n">LogicCompiler</span><span class="p">):</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compiles logic expressions using linear threshold units.</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="sd">    This compiler represents logical operations as linear threshold units:</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="sd">    - Conjunction of n literals: sgn(sum(literals) - (n - 0.5))</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="sd">    - Disjunction of n literals: sgn(sum(literals) - 0.5)</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="sd">    - Negation: 1 - literal</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="sd">    Args:</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="sd">        mode: &#39;soft&#39; (sigmoid, differentiable) or &#39;hard&#39; (sign, non-differentiable)</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;soft&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize LinearThresholdUnitCompiler.</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="sd">        Args:</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="sd">            mode: &#39;soft&#39; for sigmoid or &#39;hard&#39; for sign function</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="sd">        Raises:</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="sd">            ValueError: If mode is not &#39;soft&#39; or &#39;hard&#39;</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;soft&#39;</span><span class="p">,</span> <span class="s1">&#39;hard&#39;</span><span class="p">):</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mode must be &#39;soft&#39; or &#39;hard&#39;, got &#39;</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">compile</span><span class="p">(</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>        <span class="n">expr</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">Basic</span><span class="p">,</span>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>        <span class="n">predicates</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Predicate</span><span class="p">]</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compile a logic expression into a differentiable callable.</span>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="sd">        Args:</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="sd">            expr: SymPy logic expression</span>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="sd">            predicates: Dict mapping predicate names to Predicate objects or callables</span>
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="sd">            Callable that takes inputs and returns satisfaction tensor</span>
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>        <span class="c1"># Use base class for all validation and preprocessing</span>
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>        <span class="n">wrapped_predicates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_and_validate_predicates</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>        <span class="n">expanded_expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_quantifiers</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>        <span class="c1"># Return a closure that evaluates the expression</span>
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>        <span class="k">def</span><span class="w"> </span><span class="nf">compiled_logic</span><span class="p">(</span>
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>            <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span>
+<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a><span class="w">            </span><span class="sd">&quot;&quot;&quot;Evaluate compiled logic expression.&quot;&quot;&quot;</span>
+<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>            <span class="n">ctx</span> <span class="o">=</span> <span class="n">EvaluationContext</span><span class="p">()</span>
+<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span>
+<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>                <span class="n">expanded_expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">wrapped_predicates</span><span class="p">,</span> <span class="n">ctx</span>
+<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>            <span class="p">)</span>
+<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>
+<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>        <span class="k">return</span> <span class="n">compiled_logic</span>
+<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>
+<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_expression</span><span class="p">(</span>
+<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>        <span class="n">expr</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">Basic</span><span class="p">,</span>
+<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>        <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>        <span class="n">predicates</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Predicate</span><span class="p">],</span>
+<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a>        <span class="n">ctx</span><span class="p">:</span> <span class="n">EvaluationContext</span>
+<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Recursively evaluate SymPy expression using LTU operations.</span>
+<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>
+<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a><span class="sd">        Args:</span>
+<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a><span class="sd">            expr: SymPy expression to evaluate</span>
+<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a><span class="sd">            inputs: Single tensor or dict of tensors</span>
+<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a><span class="sd">            predicates: Dict of predicates</span>
+<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a><span class="sd">            ctx: Evaluation context for caching</span>
+<a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a>
+<a id="__codelineno-1-82" name="__codelineno-1-82" href="#__codelineno-1-82"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-1-83" name="__codelineno-1-83" href="#__codelineno-1-83"></a><span class="sd">            Tensor of shape (batch_size,) with values in [0, 1]</span>
+<a id="__codelineno-1-84" name="__codelineno-1-84" href="#__codelineno-1-84"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-1-85" name="__codelineno-1-85" href="#__codelineno-1-85"></a>        <span class="c1"># Base cases: use base class methods for predicate evaluation</span>
+<a id="__codelineno-1-86" name="__codelineno-1-86" href="#__codelineno-1-86"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">PredicateApplication</span><span class="p">):</span>
+<a id="__codelineno-1-87" name="__codelineno-1-87" href="#__codelineno-1-87"></a>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_predicate_application</span><span class="p">(</span>
+<a id="__codelineno-1-88" name="__codelineno-1-88" href="#__codelineno-1-88"></a>                <span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span>
+<a id="__codelineno-1-89" name="__codelineno-1-89" href="#__codelineno-1-89"></a>            <span class="p">)</span>
+<a id="__codelineno-1-90" name="__codelineno-1-90" href="#__codelineno-1-90"></a>
+<a id="__codelineno-1-91" name="__codelineno-1-91" href="#__codelineno-1-91"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">Symbol</span><span class="p">):</span>
+<a id="__codelineno-1-92" name="__codelineno-1-92" href="#__codelineno-1-92"></a>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_symbol</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+<a id="__codelineno-1-93" name="__codelineno-1-93" href="#__codelineno-1-93"></a>
+<a id="__codelineno-1-94" name="__codelineno-1-94" href="#__codelineno-1-94"></a>        <span class="k">if</span> <span class="n">expr</span> <span class="ow">in</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">true</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">false</span><span class="p">):</span>
+<a id="__codelineno-1-95" name="__codelineno-1-95" href="#__codelineno-1-95"></a>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_boolean_constant</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+<a id="__codelineno-1-96" name="__codelineno-1-96" href="#__codelineno-1-96"></a>
+<a id="__codelineno-1-97" name="__codelineno-1-97" href="#__codelineno-1-97"></a>        <span class="c1"># Logical operators: define YOUR semantics here</span>
+<a id="__codelineno-1-98" name="__codelineno-1-98" href="#__codelineno-1-98"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">Not</span><span class="p">):</span>
+<a id="__codelineno-1-99" name="__codelineno-1-99" href="#__codelineno-1-99"></a>            <span class="c1"># Negation: 1 - x</span>
+<a id="__codelineno-1-100" name="__codelineno-1-100" href="#__codelineno-1-100"></a>            <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span>
+<a id="__codelineno-1-101" name="__codelineno-1-101" href="#__codelineno-1-101"></a>                <span class="n">expr</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span>
+<a id="__codelineno-1-102" name="__codelineno-1-102" href="#__codelineno-1-102"></a>            <span class="p">)</span>
+<a id="__codelineno-1-103" name="__codelineno-1-103" href="#__codelineno-1-103"></a>
+<a id="__codelineno-1-104" name="__codelineno-1-104" href="#__codelineno-1-104"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">And</span><span class="p">):</span>
+<a id="__codelineno-1-105" name="__codelineno-1-105" href="#__codelineno-1-105"></a>            <span class="c1"># Conjunction: threshold(sum(literals) - (n - 0.5))</span>
+<a id="__codelineno-1-106" name="__codelineno-1-106" href="#__codelineno-1-106"></a>            <span class="n">literals</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-1-107" name="__codelineno-1-107" href="#__codelineno-1-107"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+<a id="__codelineno-1-108" name="__codelineno-1-108" href="#__codelineno-1-108"></a>                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">expr</span><span class="o">.</span><span class="n">args</span>
+<a id="__codelineno-1-109" name="__codelineno-1-109" href="#__codelineno-1-109"></a>            <span class="p">]</span>
+<a id="__codelineno-1-110" name="__codelineno-1-110" href="#__codelineno-1-110"></a>
+<a id="__codelineno-1-111" name="__codelineno-1-111" href="#__codelineno-1-111"></a>            <span class="n">summed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">literals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-1-112" name="__codelineno-1-112" href="#__codelineno-1-112"></a>            <span class="n">threshold</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">literals</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span>
+<a id="__codelineno-1-113" name="__codelineno-1-113" href="#__codelineno-1-113"></a>
+<a id="__codelineno-1-114" name="__codelineno-1-114" href="#__codelineno-1-114"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;soft&#39;</span><span class="p">:</span>
+<a id="__codelineno-1-115" name="__codelineno-1-115" href="#__codelineno-1-115"></a>                <span class="c1"># Differentiable: sigmoid(k * (sum - threshold))</span>
+<a id="__codelineno-1-116" name="__codelineno-1-116" href="#__codelineno-1-116"></a>                <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="mf">10.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">summed</span> <span class="o">-</span> <span class="n">threshold</span><span class="p">))</span>
+<a id="__codelineno-1-117" name="__codelineno-1-117" href="#__codelineno-1-117"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-1-118" name="__codelineno-1-118" href="#__codelineno-1-118"></a>                <span class="c1"># Non-differentiable: sign(sum - threshold)</span>
+<a id="__codelineno-1-119" name="__codelineno-1-119" href="#__codelineno-1-119"></a>                <span class="k">return</span> <span class="p">((</span><span class="n">summed</span> <span class="o">-</span> <span class="n">threshold</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+<a id="__codelineno-1-120" name="__codelineno-1-120" href="#__codelineno-1-120"></a>
+<a id="__codelineno-1-121" name="__codelineno-1-121" href="#__codelineno-1-121"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">Or</span><span class="p">):</span>
+<a id="__codelineno-1-122" name="__codelineno-1-122" href="#__codelineno-1-122"></a>            <span class="c1"># Disjunction: threshold(sum(literals) - 0.5)</span>
+<a id="__codelineno-1-123" name="__codelineno-1-123" href="#__codelineno-1-123"></a>            <span class="n">literals</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-1-124" name="__codelineno-1-124" href="#__codelineno-1-124"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+<a id="__codelineno-1-125" name="__codelineno-1-125" href="#__codelineno-1-125"></a>                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">expr</span><span class="o">.</span><span class="n">args</span>
+<a id="__codelineno-1-126" name="__codelineno-1-126" href="#__codelineno-1-126"></a>            <span class="p">]</span>
+<a id="__codelineno-1-127" name="__codelineno-1-127" href="#__codelineno-1-127"></a>
+<a id="__codelineno-1-128" name="__codelineno-1-128" href="#__codelineno-1-128"></a>            <span class="n">summed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">literals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-1-129" name="__codelineno-1-129" href="#__codelineno-1-129"></a>            <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span>
+<a id="__codelineno-1-130" name="__codelineno-1-130" href="#__codelineno-1-130"></a>
+<a id="__codelineno-1-131" name="__codelineno-1-131" href="#__codelineno-1-131"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;soft&#39;</span><span class="p">:</span>
+<a id="__codelineno-1-132" name="__codelineno-1-132" href="#__codelineno-1-132"></a>                <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="mf">10.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">summed</span> <span class="o">-</span> <span class="n">threshold</span><span class="p">))</span>
+<a id="__codelineno-1-133" name="__codelineno-1-133" href="#__codelineno-1-133"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-1-134" name="__codelineno-1-134" href="#__codelineno-1-134"></a>                <span class="k">return</span> <span class="p">((</span><span class="n">summed</span> <span class="o">-</span> <span class="n">threshold</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+<a id="__codelineno-1-135" name="__codelineno-1-135" href="#__codelineno-1-135"></a>
+<a id="__codelineno-1-136" name="__codelineno-1-136" href="#__codelineno-1-136"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">Implies</span><span class="p">):</span>
+<a id="__codelineno-1-137" name="__codelineno-1-137" href="#__codelineno-1-137"></a>            <span class="c1"># Implication: (NOT L) OR R</span>
+<a id="__codelineno-1-138" name="__codelineno-1-138" href="#__codelineno-1-138"></a>            <span class="n">not_lhs</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Not</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-1-139" name="__codelineno-1-139" href="#__codelineno-1-139"></a>            <span class="n">rhs</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-1-140" name="__codelineno-1-140" href="#__codelineno-1-140"></a>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span>
+<a id="__codelineno-1-141" name="__codelineno-1-141" href="#__codelineno-1-141"></a>                <span class="n">sp</span><span class="o">.</span><span class="n">Or</span><span class="p">(</span><span class="n">not_lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">),</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span>
+<a id="__codelineno-1-142" name="__codelineno-1-142" href="#__codelineno-1-142"></a>            <span class="p">)</span>
+<a id="__codelineno-1-143" name="__codelineno-1-143" href="#__codelineno-1-143"></a>
+<a id="__codelineno-1-144" name="__codelineno-1-144" href="#__codelineno-1-144"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">Equivalent</span><span class="p">):</span>
+<a id="__codelineno-1-145" name="__codelineno-1-145" href="#__codelineno-1-145"></a>            <span class="c1"># Equivalence: (L =&gt; R) AND (R =&gt; L)</span>
+<a id="__codelineno-1-146" name="__codelineno-1-146" href="#__codelineno-1-146"></a>            <span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">expr</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-1-147" name="__codelineno-1-147" href="#__codelineno-1-147"></a>            <span class="n">forward</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Implies</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+<a id="__codelineno-1-148" name="__codelineno-1-148" href="#__codelineno-1-148"></a>            <span class="n">backward</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Implies</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">lhs</span><span class="p">)</span>
+<a id="__codelineno-1-149" name="__codelineno-1-149" href="#__codelineno-1-149"></a>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span>
+<a id="__codelineno-1-150" name="__codelineno-1-150" href="#__codelineno-1-150"></a>                <span class="n">sp</span><span class="o">.</span><span class="n">And</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span> <span class="n">backward</span><span class="p">),</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span>
+<a id="__codelineno-1-151" name="__codelineno-1-151" href="#__codelineno-1-151"></a>            <span class="p">)</span>
+<a id="__codelineno-1-152" name="__codelineno-1-152" href="#__codelineno-1-152"></a>
+<a id="__codelineno-1-153" name="__codelineno-1-153" href="#__codelineno-1-153"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported expression type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
 <h2 id="usage-example">Usage Example</h2>
 <p><code>LinearThresholdUnitCompiler</code> is built into pysignet and can be imported directly:</p>
-<pre><code class="language-python">import torch
-from pysignet import Symbol, Variable, LinearThresholdUnitCompiler, LogicLoss
-from pysignet import And, Implies
-
-# Create the built-in LTU compiler
-compiler = LinearThresholdUnitCompiler(mode='soft')
-
-# Define logic expression
-P, Q = Symbol(&quot;P Q&quot;)
-X = Variable(&quot;X&quot;)
-expr = Implies(P(X), Q(X))
-
-# Define predicates
-predicates = {
-    &quot;P&quot;: lambda x: torch.sigmoid(x.sum(dim=-1)),
-    &quot;Q&quot;: lambda x: torch.sigmoid(x.mean(dim=-1)),
-}
-
-# Compile and wrap in LogicLoss
-compiled = compiler.compile(expr, predicates)
-logic_loss = LogicLoss(compiled)
-
-# Evaluate
-x = torch.randn(10, 5)
-satisfaction = logic_loss.satisfaction(X=x)  # scalar
-loss = logic_loss.loss(X=x)                  # for training
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">Symbol</span><span class="p">,</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">LinearThresholdUnitCompiler</span><span class="p">,</span> <span class="n">LogicLoss</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Implies</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Create the built-in LTU compiler</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">compiler</span> <span class="o">=</span> <span class="n">LinearThresholdUnitCompiler</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;soft&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># Define logic expression</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">P</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;P Q&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">Implies</span><span class="p">(</span><span class="n">P</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">Q</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Define predicates</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">predicates</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="p">}</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="c1"># Compile and wrap in LogicLoss</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compiler</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="n">logic_loss</span> <span class="o">=</span> <span class="n">LogicLoss</span><span class="p">(</span><span class="n">compiled</span><span class="p">)</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="c1"># Evaluate</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="n">satisfaction</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">satisfaction</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># scalar</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="n">loss</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>                  <span class="c1"># for training</span>
+</code></pre></div>
 <h2 id="base-class-methods-you-should-use">Base Class Methods You Should Use</h2>
 <h3 id="validation-and-preprocessing">Validation and Preprocessing</h3>
-<pre><code class="language-python"># In your compile() method:
-wrapped_predicates = self._wrap_and_validate_predicates(expr, predicates)
-expanded_expr = self._expand_quantifiers(expr)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># In your compile() method:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">wrapped_predicates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_and_validate_predicates</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">expanded_expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_quantifiers</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+</code></pre></div>
 <p>These methods:
 - Wrap callables in <code>Predicate</code> objects
 - Validate that all symbols have predicates
@@ -1394,20 +1396,20 @@ expanded_expr = self._expand_quantifiers(expr)
 - Expand quantifiers (<code>ForAll</code>, <code>Exists</code>)
 - Check domain size limits</p>
 <h3 id="predicate-evaluation">Predicate Evaluation</h3>
-<pre><code class="language-python"># In your _evaluate_expression() method:
-
-# For PredicateApplication (e.g., P(X, Y, 0))
-if isinstance(expr, PredicateApplication):
-    return self._evaluate_predicate_application(expr, inputs, predicates, ctx)
-
-# For nullary predicates (e.g., P)
-if isinstance(expr, sp.Symbol):
-    return self._evaluate_symbol(expr, inputs, predicates, ctx)
-
-# For boolean constants (sp.true, sp.false)
-if expr in (sp.true, sp.false):
-    return self._evaluate_boolean_constant(expr, inputs)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># In your _evaluate_expression() method:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># For PredicateApplication (e.g., P(X, Y, 0))</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">PredicateApplication</span><span class="p">):</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_predicate_application</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># For nullary predicates (e.g., P)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">Symbol</span><span class="p">):</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_symbol</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># For boolean constants (sp.true, sp.false)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="k">if</span> <span class="n">expr</span> <span class="ow">in</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">true</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">false</span><span class="p">):</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_boolean_constant</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+</code></pre></div>
 <p>These methods handle:
 - Free variable extraction
 - Input routing (single tensor vs dict)
@@ -1417,28 +1419,28 @@ if expr in (sp.true, sp.false):
 - Error messages</p>
 <h2 id="best-practices">Best Practices</h2>
 <h3 id="1-always-use-base-class-methods">1. Always Use Base Class Methods</h3>
-<pre><code class="language-python"># GOOD: Use base class for predicate evaluation
-if isinstance(expr, PredicateApplication):
-    return self._evaluate_predicate_application(expr, inputs, predicates, ctx)
-
-# BAD: Reimplementing predicate logic yourself
-if isinstance(expr, PredicateApplication):
-    # ... 100 lines of manual handling
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># GOOD: Use base class for predicate evaluation</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">PredicateApplication</span><span class="p">):</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_predicate_application</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># BAD: Reimplementing predicate logic yourself</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">PredicateApplication</span><span class="p">):</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="c1"># ... 100 lines of manual handling</span>
+</code></pre></div>
 <h3 id="2-focus-on-logical-operator-semantics">2. Focus on Logical Operator Semantics</h3>
 <p>Your compiler should only define the semantics of AND, OR, NOT, etc. Everything else is handled by the base class.</p>
-<pre><code class="language-python"># Your compiler focuses on THIS:
-if isinstance(expr, sp.And):
-    # Define what AND means in your system
-    literals = [self._evaluate_expression(arg, ...) for arg in expr.args]
-    return your_and_semantics(literals)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Your compiler focuses on THIS:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">And</span><span class="p">):</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="c1"># Define what AND means in your system</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">literals</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">expr</span><span class="o">.</span><span class="n">args</span><span class="p">]</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="k">return</span> <span class="n">your_and_semantics</span><span class="p">(</span><span class="n">literals</span><span class="p">)</span>
+</code></pre></div>
 <h3 id="3-use-evaluationcontext-for-caching">3. Use EvaluationContext for Caching</h3>
 <p>The base class predicate evaluation methods automatically use <code>ctx</code> for caching. Make sure to pass it through:</p>
-<pre><code class="language-python">def _evaluate_expression(self, expr, inputs, predicates, ctx):
-    # Pass ctx to base class methods
-    return self._evaluate_predicate_application(expr, inputs, predicates, ctx)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="c1"># Pass ctx to base class methods</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_predicate_application</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+</code></pre></div>
 <h3 id="4-handle-all-logical-operators">4. Handle All Logical Operators</h3>
 <p>At minimum, implement:
 - <code>sp.Not</code> (negation)
@@ -1452,18 +1454,18 @@ if isinstance(expr, sp.And):
 - Use differentiable operations (e.g., <code>sigmoid</code> instead of <code>sign</code>)
 - Avoid operations that break gradient flow (e.g., <code>.detach()</code>, comparisons)</p>
 <h3 id="6-validate-constructor-arguments">6. Validate Constructor Arguments</h3>
-<pre><code class="language-python">def __init__(self, mode: str = 'soft'):
-    if mode not in ('soft', 'hard'):
-        raise ValueError(f&quot;mode must be 'soft' or 'hard', got '{mode}'&quot;)
-    self.mode = mode
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;soft&#39;</span><span class="p">):</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;soft&#39;</span><span class="p">,</span> <span class="s1">&#39;hard&#39;</span><span class="p">):</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mode must be &#39;soft&#39; or &#39;hard&#39;, got &#39;</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+</code></pre></div>
 <h2 id="domain-size-configuration">Domain Size Configuration</h2>
 <p>The base class provides configurable domain size limits:</p>
-<pre><code class="language-python">class MyCompiler(LogicCompiler):
-    # Override class attributes to change limits
-    MAX_DOMAIN_SIZE = 5000  # Raise error above this
-    WARN_DOMAIN_SIZE = 500  # Warn above this
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyCompiler</span><span class="p">(</span><span class="n">LogicCompiler</span><span class="p">):</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="c1"># Override class attributes to change limits</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">MAX_DOMAIN_SIZE</span> <span class="o">=</span> <span class="mi">5000</span>  <span class="c1"># Raise error above this</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">WARN_DOMAIN_SIZE</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c1"># Warn above this</span>
+</code></pre></div>
 <p>These limits prevent accidental expansion of huge quantified domains.</p>
 <h2 id="testing-your-compiler">Testing Your Compiler</h2>
 <p>Create comprehensive tests covering:</p>
@@ -1476,28 +1478,28 @@ if isinstance(expr, sp.And):
 <li><strong>Gradient flow</strong>: If differentiable, verify gradients propagate</li>
 </ol>
 <p>Example test structure:</p>
-<pre><code class="language-python">import pytest
-import torch
-from pysignet import Symbol
-
-def test_basic_and():
-    &quot;&quot;&quot;Test AND operation.&quot;&quot;&quot;
-    compiler = MyCompiler()
-    P, Q = Symbol(&quot;P Q&quot;)
-    expr = sp.And(P, Q)
-
-    predicates = {
-        &quot;P&quot;: lambda x: torch.full((x.shape[0],), 0.8),
-        &quot;Q&quot;: lambda x: torch.full((x.shape[0],), 0.9)
-    }
-
-    compiled = compiler.compile(expr, predicates)
-    x = torch.randn(5, 10)
-    result = compiled(x)
-
-    assert result.shape == (5,)
-    assert torch.all((result &gt;= 0) &amp; (result &lt;= 1))
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">Symbol</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_basic_and</span><span class="p">():</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test AND operation.&quot;&quot;&quot;</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="n">compiler</span> <span class="o">=</span> <span class="n">MyCompiler</span><span class="p">()</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="n">P</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;P Q&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="n">expr</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">And</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="n">predicates</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>        <span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],),</span> <span class="mf">0.8</span><span class="p">),</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>        <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],),</span> <span class="mf">0.9</span><span class="p">)</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    <span class="p">}</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>    <span class="n">compiled</span> <span class="o">=</span> <span class="n">compiler</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">compiled</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">5</span><span class="p">,)</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">((</span><span class="n">result</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">))</span>
+</code></pre></div>
 <h2 id="comparison-t-norm-vs-ltu-compilers">Comparison: T-norm vs LTU Compilers</h2>
 <p>The library includes two built-in compilers:</p>
 <p><strong>TNormCompiler</strong> (continuous relaxations):

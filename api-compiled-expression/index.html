@@ -1065,21 +1065,21 @@ clear, unambiguous variable binding.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python"># Create compiled expression
-compiled = compiler.compile(expr, predicates)
-
-# Evaluate with full bindings - returns (batch_size,)
-result = compiled(X=x, Y=y)  # shape: (batch_size,)
-
-# Partial binding
-partial = compiled.partial(X=x)
-result = partial(Y=y)  # shape: (batch_size,)
-
-# Introspection
-print(compiled.free_variables)  # {'X', 'Y'}
-print(partial.free_variables)   # {'Y'}
-print(compiled.compiler)        # TNormCompiler(...)
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Create compiled expression</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compiler</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Evaluate with full bindings - returns (batch_size,)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">compiled</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>  <span class="c1"># shape: (batch_size,)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Partial binding</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">partial</span> <span class="o">=</span> <span class="n">compiled</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>  <span class="c1"># shape: (batch_size,)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Introspection</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">compiled</span><span class="o">.</span><span class="n">free_variables</span><span class="p">)</span>  <span class="c1"># {&#39;X&#39;, &#39;Y&#39;}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">partial</span><span class="o">.</span><span class="n">free_variables</span><span class="p">)</span>   <span class="c1"># {&#39;Y&#39;}</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">compiled</span><span class="o">.</span><span class="n">compiler</span><span class="p">)</span>        <span class="c1"># TNormCompiler(...)</span>
+</code></pre></div>
 </details>
 
 
@@ -1229,10 +1229,10 @@ print(compiled.compiler)        # TNormCompiler(...)
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python">compiled.free_variables  # {'X', 'Y'}
-partial = compiled.partial(X=x)
-partial.free_variables   # {'Y'}
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">compiled</span><span class="o">.</span><span class="n">free_variables</span>  <span class="c1"># {&#39;X&#39;, &#39;Y&#39;}</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">partial</span> <span class="o">=</span> <span class="n">compiled</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">partial</span><span class="o">.</span><span class="n">free_variables</span>   <span class="c1"># {&#39;Y&#39;}</span>
+</code></pre></div>
 </details>    </div>
 
 </div>
@@ -1410,15 +1410,15 @@ satisfied.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python"># Soft satisfaction (default)
-result = compiled(X=x, Y=y)  # shape: (batch_size,)
-
-# Log-space satisfaction
-result = compiled(log_mode=True, X=x)  # log-probs
-
-# Boolean satisfaction
-result = compiled(X=x, Y=y, return_boolean=True)
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Soft satisfaction (default)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">compiled</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>  <span class="c1"># shape: (batch_size,)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Log-space satisfaction</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">compiled</span><span class="p">(</span><span class="n">log_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># log-probs</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Boolean satisfaction</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">result</span> <span class="o">=</span> <span class="n">compiled</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">return_boolean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
 </details>
     </div>
 
@@ -1662,9 +1662,9 @@ using fused ops (logsigmoid, log_softmax).</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python">params = compiled.get_trainable_parameters()
-optimizer = torch.optim.Adam(params, lr=0.001)
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">params</span> <span class="o">=</span> <span class="n">compiled</span><span class="o">.</span><span class="n">get_trainable_parameters</span><span class="p">()</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+</code></pre></div>
 </details>
     </div>
 
@@ -1791,16 +1791,16 @@ CompiledExpression has fewer free variables.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python"># Bind X, leaving Y for later
-partial = compiled.partial(X=x)
-print(partial.free_variables)  # {'Y'}
-
-# Chain partial bindings
-result = compiled.partial(X=x).partial(Y=y)(Z=z)
-
-# Bind multiple at once
-partial = compiled.partial(X=x, Y=y)
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Bind X, leaving Y for later</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">partial</span> <span class="o">=</span> <span class="n">compiled</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">partial</span><span class="o">.</span><span class="n">free_variables</span><span class="p">)</span>  <span class="c1"># {&#39;Y&#39;}</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Chain partial bindings</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">compiled</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">y</span><span class="p">)(</span><span class="n">Z</span><span class="o">=</span><span class="n">z</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Bind multiple at once</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">partial</span> <span class="o">=</span> <span class="n">compiled</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+</code></pre></div>
 </details>
     </div>
 

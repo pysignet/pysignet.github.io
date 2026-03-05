@@ -918,23 +918,23 @@ callables that produce torch Tensors</p>
 
 <p><span class="doc-section-title">Examples:</span></p>
     <p>Direct satisfaction evaluation:</p>
-<pre><code class="language-python">P, Q = Symbol(&quot;P Q&quot;)
-X = Variable(&quot;X&quot;)
-expr = sp.And(P(X), Q(X))
-compiled = compile_logic(expr, {&quot;P&quot;: model_p, &quot;Q&quot;: model_q})
-satisfaction = compiled(X=x)  # shape: (batch_size,)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">P</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;P Q&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">And</span><span class="p">(</span><span class="n">P</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">Q</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compile_logic</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="n">model_p</span><span class="p">,</span> <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="n">model_q</span><span class="p">})</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">satisfaction</span> <span class="o">=</span> <span class="n">compiled</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># shape: (batch_size,)</span>
+</code></pre></div>
 <p>Wrap in LogicLoss for training:</p>
-<pre><code class="language-python">compiled = compile_logic(expr, predicates)
-logic_loss = LogicLoss(compiled)
-loss = logic_loss.loss(X=x)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compile_logic</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">logic_loss</span> <span class="o">=</span> <span class="n">LogicLoss</span><span class="p">(</span><span class="n">compiled</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">loss</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+</code></pre></div>
 <p>With a custom t-norm:</p>
-<pre><code class="language-python">from pysignet.tnorms import LukasiewiczTNorm
-compiled = compile_logic(
-    expr, predicates, tnorm=LukasiewiczTNorm()
-)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet.tnorms</span><span class="w"> </span><span class="kn">import</span> <span class="n">LukasiewiczTNorm</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compile_logic</span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">tnorm</span><span class="o">=</span><span class="n">LukasiewiczTNorm</span><span class="p">()</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
+</code></pre></div>
 
     </div>
 
@@ -954,9 +954,9 @@ compiled = compile_logic(
         <p>Compile logic expression and wrap in LogicLoss.</p>
 <p>Convenience function that compiles a logic expression and wraps it
 in a LogicLoss for training. Equivalent to:</p>
-<pre><code>compiled = compile_logic(expr, predicates, mode=mode, tnorm=tnorm)
+<div class="highlight"><pre><span></span><code>compiled = compile_logic(expr, predicates, mode=mode, tnorm=tnorm)
 LogicLoss(compiled, post_processing=post_processing)
-</code></pre>
+</code></pre></div>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1081,12 +1081,12 @@ or None to use t-norm's recommendation (default)</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python">P, Q = Symbol(&quot;P Q&quot;)
-X = Variable(&quot;X&quot;)
-expr = sp.Implies(P(X), Q(X))
-logic_loss = logic_to_loss(expr, {&quot;P&quot;: model_p, &quot;Q&quot;: model_q})
-loss = logic_loss.loss(X=x)
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">P</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;P Q&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Implies</span><span class="p">(</span><span class="n">P</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">Q</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">logic_loss</span> <span class="o">=</span> <span class="n">logic_to_loss</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="n">model_p</span><span class="p">,</span> <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="n">model_q</span><span class="p">})</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">loss</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+</code></pre></div>
 </details>
     </div>
 
@@ -1106,8 +1106,8 @@ loss = logic_loss.loss(X=x)
         <p>Create a ConsistencyReport for measuring formula consistency.</p>
 <p>Convenience function that auto-wraps raw callables in Predicate
 objects and creates a ConsistencyReport. Equivalent to:</p>
-<pre><code>ConsistencyReport(expression, predicates)
-</code></pre>
+<div class="highlight"><pre><span></span><code>ConsistencyReport(expression, predicates)
+</code></pre></div>
 <p>Accepts a single SymPy expression or a dict mapping constraint
 names to expressions for multi-constraint reporting.</p>
 <p>The antecedent for conditional violation is auto-detected:
@@ -1188,14 +1188,14 @@ callables that produce torch Tensors</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python">P, Q = Symbol(&quot;P Q&quot;)
-X = Variable(&quot;X&quot;)
-expr = sp.Implies(P(X), Q(X))
-report = consistency_report(expr, {&quot;P&quot;: model_p, &quot;Q&quot;: model_q})
-for x_batch in dataloader:
-    report.eval(X=x_batch)
-print(report.global_violation())
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">P</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;P Q&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Implies</span><span class="p">(</span><span class="n">P</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">Q</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">report</span> <span class="o">=</span> <span class="n">consistency_report</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="n">model_p</span><span class="p">,</span> <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="n">model_q</span><span class="p">})</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">for</span> <span class="n">x_batch</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">report</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x_batch</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">global_violation</span><span class="p">())</span>
+</code></pre></div>
 </details>
     </div>
 

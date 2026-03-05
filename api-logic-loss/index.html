@@ -1038,12 +1038,12 @@ or callable. If None, uses the compiler's recommendation.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python">from pysignet import logic_to_loss
-logic_loss = logic_to_loss(expr, predicates)
-sat = logic_loss.satisfaction(X=x)  # Soft truth values
-loss = logic_loss.loss(X=x)         # For training
-params = logic_loss.trainable_parameters
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">logic_to_loss</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">logic_loss</span> <span class="o">=</span> <span class="n">logic_to_loss</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">sat</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">satisfaction</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Soft truth values</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">loss</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>         <span class="c1"># For training</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">params</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">trainable_parameters</span>
+</code></pre></div>
 </details>
 
 
@@ -1161,9 +1161,9 @@ params = logic_loss.trainable_parameters
 
 <details class="example" open>
   <summary>Example</summary>
-  <pre><code class="language-python">params = logic_loss.trainable_parameters
-optimizer = torch.optim.Adam(params, lr=0.001)
-</code></pre>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">params</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">trainable_parameters</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+</code></pre></div>
 </details>    </div>
 
 </div>
@@ -1402,8 +1402,8 @@ avoids underflow.</p>
 
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <pre><code class="language-python">log_sat = logic_loss.log_satisfaction(X=x)
-</code></pre>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">log_sat</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">log_satisfaction</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+</code></pre></div>
 
     </div>
 
@@ -1594,11 +1594,11 @@ quantify='forall'/'exists'</p>
 
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <pre><code class="language-python">loss = logic_loss.loss(X=x)  # scalar
-loss = logic_loss.loss(
-    X=x, quantify='none', reduction='mean'
-)
-</code></pre>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">loss</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># scalar</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">loss</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">quantify</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+</code></pre></div>
 
     </div>
 
@@ -1718,9 +1718,9 @@ result in a new LogicLoss.</p>
 
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <pre><code class="language-python">partial = logic_loss.partial(X=x)
-result = partial(Y=y)
-</code></pre>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">partial</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+</code></pre></div>
 
     </div>
 
@@ -1862,10 +1862,10 @@ result = partial(Y=y)
 
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <pre><code class="language-python">sat = logic_loss.satisfaction(X=x)  # scalar (forall)
-sat = logic_loss.satisfaction(X=x, quantify='exists')
-sat = logic_loss.satisfaction(X=x, quantify='none')
-</code></pre>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">sat</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">satisfaction</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># scalar (forall)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">sat</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">satisfaction</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">quantify</span><span class="o">=</span><span class="s1">&#39;exists&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">sat</span> <span class="o">=</span> <span class="n">logic_loss</span><span class="o">.</span><span class="n">satisfaction</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">quantify</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+</code></pre></div>
 
     </div>
 
