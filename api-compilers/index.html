@@ -1125,7 +1125,7 @@ expression when called with inputs.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>T-norm instance for relaxation (default: RProductTNorm)</p>
+                <p>T-norm instance for relaxation (default: MixedTNorm)</p>
               </div>
             </td>
             <td>
@@ -1141,7 +1141,7 @@ expression when called with inputs.</p>
   <blockquote>
 <blockquote>
 <blockquote>
-<p>compiler = TNormCompiler(tnorm=RProductTNorm())
+<p>compiler = TNormCompiler()  # uses MixedTNorm by default
 compiled = compiler.compile(expr, predicates)
 satisfaction = compiled(X=x)  # Returns tensor in [0, 1]</p>
 </blockquote>
