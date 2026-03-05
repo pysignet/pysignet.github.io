@@ -812,13 +812,13 @@
 
 <h1 id="core-concepts">Core Concepts</h1>
 <h2 id="symbols-and-variables">Symbols and Variables</h2>
-<p><strong>Symbols</strong> represent named predicates — functions that map inputs to truth values in [0, 1]:</p>
+<p><strong>Symbols</strong> represent named predicates (functions that map inputs to truth values in [0, 1]):</p>
 <pre><code class="language-python">from pysignet import Symbol, Variable, And, Or, Not, Implies, Equivalent
 
 # Create predicate symbols
 P, Q, R = Symbol(&quot;P Q R&quot;)
 
-# Create FOL variables — placeholders bound to tensors at evaluation time
+# Create FOL variables (placeholders bound to tensors at evaluation time)
 X, Y = Variable(&quot;X Y&quot;)
 </code></pre>
 <p><strong>Variables</strong> are bound using keyword arguments at evaluation time:</p>
@@ -838,7 +838,7 @@ expr = P(X)
 Digit = Symbol(&quot;Digit&quot;)
 expr = Digit(X, 3)  # &quot;X is digit 3&quot;
 
-# Multi-class classifier — model returns (batch, 10), class index selects output
+# Multi-class classifier: model returns (batch, 10), class index selects output
 model = nn.Sequential(nn.Linear(784, 10), nn.Softmax(dim=-1))
 predicates = {&quot;Digit&quot;: model}
 </code></pre>

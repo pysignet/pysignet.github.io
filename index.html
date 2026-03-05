@@ -766,12 +766,14 @@
 
 <h1 id="pysignet">pysignet</h1>
 <p><img alt="pysignet logo" src="assets/pysignet-logo.png" /></p>
+<p><a href="https://github.com/pysignet/pysignet"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-pysignet%2Fpysignet-181717?logo=github&amp;logoColor=white" /></a>
+<a href="https://github.com/pysignet/pysignet/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/pysignet/pysignet/actions/workflows/ci.yml/badge.svg" /></a></p>
 <p>pysignet is a PyTorch library that converts symbolic predicate logic expressions
-(written in SymPy notation, with minor extensions) into differentiable loss
-functions, enabling you to train neural networks with logical constraints using
-First-Order Logic (FOL). It bridges symbolic reasoning and gradient-based
-optimization so that logical rules, such as implication, mutual exclusion, or
-quantified constraints, become training signals.</p>
+(written in SymPy notation) into differentiable loss functions, enabling you to
+train neural networks with logical constraints using First-Order Logic (FOL). It
+bridges symbolic reasoning and gradient-based optimization so that logical rules
+like implication, mutual exclusion, or quantified constraints become training
+signals.</p>
 <h2 id="quick-start">Quick Start</h2>
 <pre><code class="language-python">import torch
 import torch.nn as nn
@@ -809,10 +811,10 @@ loss.backward()               # Gradients flow to both models
 </code></pre>
 <h2 id="next-steps">Next Steps</h2>
 <ul>
-<li><a href="concepts/">Core Concepts</a> — Symbols, Variables, Predicates, T-Norms, and Quantifiers</li>
-<li><a href="api/">API Reference</a> — Full API documentation auto-generated from docstrings</li>
-<li><a href="custom-compilers/">Custom Compilers</a> — Implement your own logic compilation strategy</li>
-<li><a href="https://github.com/pysignet/pysignet/tree/main/notebooks">Notebooks</a> — Interactive examples on GitHub</li>
+<li><a href="concepts/">Core Concepts</a>: Symbols, Variables, Predicates, T-Norms, and Quantifiers</li>
+<li><a href="api/">API Reference</a>: Full API documentation auto-generated from docstrings</li>
+<li><a href="custom-compilers/">Custom Compilers</a>: Implement your own logic compilation strategy</li>
+<li><a href="https://github.com/pysignet/pysignet/tree/main/notebooks">Notebooks</a>: Interactive examples on GitHub</li>
 </ul>
 
 
