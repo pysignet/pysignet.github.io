@@ -1138,15 +1138,10 @@ expression when called with inputs.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<p>compiler = TNormCompiler()  # uses MixedTNorm by default
+  <pre><code class="language-python">compiler = TNormCompiler()  # uses MixedTNorm by default
 compiled = compiler.compile(expr, predicates)
-satisfaction = compiled(X=x)  # Returns tensor in [0, 1]</p>
-</blockquote>
-</blockquote>
-</blockquote>
+satisfaction = compiled(X=x)  # Returns tensor in [0, 1]
+</code></pre>
 </details>
 
 
@@ -1559,15 +1554,10 @@ thresholds and have larger gradients around zero.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<p>compiler = LinearThresholdUnitCompiler(mode='soft')
+  <pre><code class="language-python">compiler = LinearThresholdUnitCompiler(mode='soft')
 compiled = compiler.compile(expr, predicates)
-satisfaction = compiled(X=x)  # Returns tensor in [0, 1]</p>
-</blockquote>
-</blockquote>
-</blockquote>
+satisfaction = compiled(X=x)  # Returns tensor in [0, 1]
+</code></pre>
 </details>
 
 
