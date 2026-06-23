@@ -1360,8 +1360,8 @@
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">Symbol</span><span class="p">,</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">LinearThresholdUnitCompiler</span><span class="p">,</span> <span class="n">LogicLoss</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Implies</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Create the built-in LTU compiler</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">compiler</span> <span class="o">=</span> <span class="n">LinearThresholdUnitCompiler</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;soft&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Create the built-in LTU compiler (alpha controls sigmoid sharpness)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">compiler</span> <span class="o">=</span> <span class="n">LinearThresholdUnitCompiler</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;soft&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># Define logic expression</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">P</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;P Q&quot;</span><span class="p">)</span>
@@ -1507,9 +1507,10 @@
 - OR: <code>a + b - a*b</code> (Product) or <code>min(1, a+b)</code> (Lukasiewicz)
 - NOT: <code>1 - a</code></p>
 <p><strong>LinearThresholdUnitCompiler</strong> (threshold functions):
-- AND: <code>sigmoid(10 * (sum(literals) - (n - 0.5)))</code>
-- OR: <code>sigmoid(10 * (sum(literals) - 0.5))</code>
-- NOT: <code>1 - a</code></p>
+- AND: <code>sigmoid(alpha * (sum(literals) - (n - 0.5)))</code>
+- OR: <code>sigmoid(alpha * (sum(literals) - 0.5))</code>
+- NOT: <code>1 - a</code>
+- <code>alpha</code> (default 1.0) controls sigmoid sharpness; larger values approach hard thresholds</p>
 <p>Both use the same base class infrastructure, differing only in operator semantics.</p>
 <h2 id="summary">Summary</h2>
 <p>Implementing a custom compiler requires:

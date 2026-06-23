@@ -426,6 +426,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#compilation-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compilation Modes
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -868,6 +879,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#compilation-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compilation Modes
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1049,6 +1071,34 @@ numerical stability.</p>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Specify a t-norm explicitly</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">logic_loss</span> <span class="o">=</span> <span class="n">logic_to_loss</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">tnorm</span><span class="o">=</span><span class="n">LukasiewiczTNorm</span><span class="p">())</span>
 </code></pre></div>
+<h2 id="compilation-modes">Compilation Modes</h2>
+<p>Both <code>compile_logic</code> and <code>logic_to_loss</code> accept a <code>mode</code> parameter that selects the
+compilation strategy. The default is <code>mode='tnorm'</code>, which uses the t-norm compiler
+described above.</p>
+<p>Pass <code>mode='ltu'</code> to use a LinearThresholdUnit (LTU) compiler instead:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">Symbol</span><span class="p">,</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">compile_logic</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">P</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;P Q&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">Implies</span><span class="p">(</span><span class="n">P</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">Q</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">predicates</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="n">model_p</span><span class="p">,</span> <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="n">model_q</span><span class="p">}</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="c1"># T-norm mode (default)</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compile_logic</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">)</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="c1"># LTU mode</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compile_logic</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;ltu&#39;</span><span class="p">)</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="c1"># LTU mode with sharper thresholds</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="n">compiled</span> <span class="o">=</span> <span class="n">compile_logic</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;ltu&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+</code></pre></div>
+<p>The <code>alpha</code> parameter controls sigmoid sharpness in LTU mode. Larger values push
+the soft threshold closer to a hard binary threshold (useful for near-deterministic
+predicates). The <code>tnorm=</code> parameter is ignored in LTU mode; pass <code>alpha=</code> instead.</p>
+<p>You can also import and instantiate <code>LinearThresholdUnitCompiler</code> directly for
+use outside of <code>compile_logic</code>. See <a href="../custom-compilers/">Custom Compilers</a> for
+details on extending the compiler base class.</p>
 
 
 
