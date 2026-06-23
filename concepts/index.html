@@ -966,7 +966,8 @@ into that output vector. It is not a second model input.</p>
 model <code>f(x1, x2)</code> -- it does not fit the single-input <code>nn.Module</code> pattern above.
 Register it as a <strong>lambda</strong> instead. The lambda is treated as a plain callable:
 pysignet passes the predicate arguments to it in the order they appear in the
-expression, and thresholds the scalar output at 0.5.</p>
+expression and uses the returned [0, 1] value as a fuzzy truth value directly
+(no thresholding).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;X1 X2&quot;</span><span class="p">)</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">Similar</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s2">&quot;Similar&quot;</span><span class="p">)</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">Equivalent</span><span class="p">(</span><span class="n">Similar</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">),</span> <span class="n">Similar</span><span class="p">(</span><span class="n">X2</span><span class="p">,</span> <span class="n">X1</span><span class="p">))</span>
@@ -1066,6 +1067,7 @@ reduced via the <code>quantify</code> parameter:</p>
 <p>The default is <code>MixedTNorm</code>, which uses <code>GodelTNorm</code> for high-arity conjunctions
 (arity &gt; 4) and <code>RProductTNorm</code> otherwise to balance gradient quality and
 numerical stability.</p>
+<p>To use a specific t-norm, pass it to <code>logic_to_loss</code> or <code>compile_logic</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet.tnorms</span><span class="w"> </span><span class="kn">import</span> <span class="n">RProductTNorm</span><span class="p">,</span> <span class="n">LukasiewiczTNorm</span><span class="p">,</span> <span class="n">GodelTNorm</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Specify a t-norm explicitly</span>

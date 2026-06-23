@@ -775,6 +775,10 @@ bridges symbolic reasoning and gradient-based optimization so that logical rules
 like implication, mutual exclusion, or quantified constraints become training
 signals.</p>
 <h2 id="quick-start">Quick Start</h2>
+<p>Let us look at an example first. We will define a logical constraint in SymPy
+notation, map each predicate symbol to a neural network, and compile it into a
+differentiable loss whose gradients flow back through the logic to every model
+involved.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pysignet</span><span class="w"> </span><span class="kn">import</span> <span class="n">Symbol</span><span class="p">,</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">logic_to_loss</span>
